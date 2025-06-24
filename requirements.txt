@@ -1,0 +1,13 @@
+streamlit
+pdfminer.six
+python-docx
+pytesseract
+Pillow
+spacy
+keybert
+bertopic
+scikit-learn
+wordcloud
+matplotlib
+numpy
+plotly
