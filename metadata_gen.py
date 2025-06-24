@@ -5,9 +5,7 @@ import pytesseract
 from PIL import Image
 import spacy
 from keybert import KeyBERT
-from bertopic import BERTopic
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,8 +20,6 @@ except:
     nlp = spacy.load("en_core_web_sm")
 
 kw_model = KeyBERT()
-topic_model = BERTopic()
-clf = LogisticRegression()
 tfidf = TfidfVectorizer(max_features=1000)
 
 def extract_text_from_path(path, suffix):
