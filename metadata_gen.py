@@ -13,10 +13,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 try:
+    import spacy
     nlp = spacy.load("en_core_web_sm")
 except:
-    from spacy.cli import download
-    download("en_core_web_sm")
+    #from spacy.cli import download
+    # download("en_core_web_sm")
+    import spacy
     nlp = spacy.load("en_core_web_sm")
 
 kw_model = KeyBERT()
