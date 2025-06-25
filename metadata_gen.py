@@ -1,7 +1,8 @@
-#Import modules
+# Import modules
 import re, io
 from pdfminer.high_level import extract_text as extract_pdf_text
-import docx, pytesseract
+import docx
+import easyocr
 from PIL import Image
 import spacy
 from keybert import KeyBERT
@@ -11,26 +12,30 @@ import matplotlib.pyplot as plt
 import numpy as np
 from wordcloud import WordCloud
 
-#Loading NLP models
+# Load models
 nlp_model = spacy.load("en_core_web_sm")
 keyword_extractor = KeyBERT()
 text_summarizer = pipeline("summarization", model="sshleifer/distilbart-cnn-12-6")
 sbert_model = SentenceTransformer("all-MiniLM-L6-v2")
+ocr_reader = easyocr.Reader(['en'], gpu=False)
 
-#Function for reading the document uploaded on the app
+# Function for reading the document uploaded on the app
 def read_document(path, extension):
-    if extension == ".pdf":
-        return extract_pdf_text(path)
-    elif extension == ".docx":
-        return "\n".join(para.text for para in docx.Document(path).paragraphs)
-    #OCR to extract text from image files
-    elif extension in [".png", ".jpg", ".jpeg"]:
-        return pytesseract.image_to_string(Image.open(path))
-    elif extension == ".txt":
-        return open(path, encoding="utf-8").read()
+    try:
+        if extension == ".pdf":
+            return extract_pdf_text(path)
+        elif extension == ".docx":
+            return "\n".join(para.text for para in docx.Document(path).paragraphs)
+        elif extension in [".png", ".jpg", ".jpeg"]:
+            lines = ocr_reader.readtext(path, detail=0)
+            return "\n".join(lines)
+        elif extension == ".txt":
+            return open(path, encoding="utf-8").read()
+    except Exception as e:
+        return f"Could not read file: {e}"
     return ""
 
-#Function to find out if the line is a Potential Heading
+# Function to find out if the line is a Potential Heading
 def is_potential_heading(line):
     text = line.strip()
     return (
@@ -47,7 +52,7 @@ def is_potential_heading(line):
         )
     )
 
-#Function to divide the text into sections
+# Function to divide the text into sections
 def segment_text_into_sections(raw_text):
     lines = [line for line in raw_text.split("\n") if line.strip()]
     structured = {}
@@ -76,7 +81,7 @@ def segment_text_into_sections(raw_text):
 
     return structured
 
-#Function to extract metadata from the text
+# Function to extract metadata from the text
 def extract_metadata(text, fast=True):
     sections = segment_text_into_sections(text)
     summaries, key_terms, keyword_scores = [], [], {}
@@ -116,7 +121,7 @@ def extract_metadata(text, fast=True):
         "named_entities": list(named_entities)
     }
 
-#Function to get word count, sentence count etc. from the text
+# Function to get word count, sentence count etc. from the text
 def get_document_stats(text):
     doc = nlp_model(text)
     return {
@@ -125,11 +130,11 @@ def get_document_stats(text):
         "entity_count": len(doc.ents)
     }
 
-#Function to create the Wordcloud for the document
+# Function to create the Wordcloud for the document
 def create_wordcloud_image(text):
     return WordCloud(width=800, height=400, background_color="white").generate(text).to_image()
 
-#Function to generate the keyword relevance chart
+# Function to generate the keyword relevance chart
 def keyword_score_bar_image(scores):
     keys, values = list(scores.keys()), list(scores.values())
     fig, ax = plt.subplots(figsize=(6, 4))
@@ -145,7 +150,7 @@ def keyword_score_bar_image(scores):
     buf.seek(0)
     return Image.open(buf)
 
-
+# Function to render NER tags with HTML highlighting
 def visualize_named_entities(text):
     highlight_colors = {
         "ORG": "#ffd966", "PERSON": "#f4cccc", "GPE": "#c9daf8",
