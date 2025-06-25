@@ -4,7 +4,7 @@ A Streamlit-based app that extracts and visualizes metadata from documents (PDF,
 streamlit run app.py
 on, keyword extraction, named entity recognition, and more.
 
-# 📍 **Live App:**  
+# 📍 **Live App: https://automated-metadata-generator-app.streamlit.app**  
 👉 [Click Here for App Link](https://automated-metadata-generator-app.streamlit.app/) 👈  
 
 ---
