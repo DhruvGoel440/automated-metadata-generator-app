@@ -5,6 +5,8 @@ pytesseract
 Pillow
 spacy
 keybert
+transformers
+sentence-transformers
 scikit-learn
 wordcloud
 matplotlib

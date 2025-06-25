@@ -1,83 +1,99 @@
+#Import modules
 import streamlit as st
 import os, tempfile, json, hashlib
 import metadata_gen as mg
 
-st.set_page_config(layout="wide", page_title="Metadata Generator")
-st.markdown("## 📄 Automated Metadata Generator")
+#Streamlit page setup
+st.set_page_config(
+    page_title="Metadata Generator",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+st.markdown("# Automated Metadata Generator")
 
-uploaded = st.file_uploader(
-    "Upload documents", 
+#File uploader
+uploaded_files = st.file_uploader(
+    "📁 Upload documents (PDF, DOCX, TXT, Image)", 
     type=["pdf", "docx", "txt", "png", "jpg", "jpeg"], 
     accept_multiple_files=True
 )
 
-docs_text = []
-doc_names = []
+#Processing the uploaded files
+if uploaded_files:
+    for uploaded_file in uploaded_files:
+        file_ext = os.path.splitext(uploaded_file.name)[1].lower()
+        
+        tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=file_ext)
+        tmp_file.write(uploaded_file.read())
+        tmp_file.close()
 
-if uploaded:
-    for file in uploaded:
-        suffix = os.path.splitext(file.name)[1].lower()
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-        tmp.write(file.read())
-        tmp.close()
+        #Extracting text and analyzing
+        raw_text = mg.read_document(tmp_file.name, file_ext)
+        metadata = mg.extract_metadata(raw_text)
+        stats = mg.get_document_stats(raw_text)
 
-        text = mg.extract_text_from_path(tmp.name, suffix)
-        docs_text.append(text)
-        doc_names.append(file.name)
+        doc_hash = hashlib.md5(uploaded_file.name.encode()).hexdigest()
 
-        meta = mg.generate_metadata(text)
-        metrics = mg.compute_metrics(text)
+        st.markdown("----")
+        st.markdown(f"### 📝 Document ID: `{doc_hash}`")
+        st.metric("📄 Filename", uploaded_file.name)
 
-        doc_id = hashlib.md5(file.name.encode()).hexdigest()
+        with st.expander("📈 File Details", expanded=True):
+            col1, col2, col3 = st.columns(3)
+            col1.metric("📦 File Size", f"{os.path.getsize(tmp_file.name) / 1024:.2f} KB")
+            col2.metric("📁 File Type", "Document")
+            col3.metric("🧾 Content Type", uploaded_file.type)
 
-        st.markdown("---")
-        st.markdown(f"### 📘 Document ID: `{doc_id}`")
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Filename", file.name)
-        col2.metric("File Size", f"{os.path.getsize(tmp.name) / 1024:.2f} KB")
-        col3.metric("File Type", "Document")
-        col4.metric("Content Type", file.type)
+        #Summary and keywords
+        with st.expander("📑 Summary & Keywords", expanded=True):
+            st.subheader("📝 Summary")
+            st.write(metadata["summary"])
 
-        st.markdown("### 📝 Summary")
-        st.write(meta["summary"])
-
-        st.markdown("### 🔑 Keywords")
-        for kw in meta["keywords"]:
+            st.subheader("🔑 Keywords")
             st.markdown(
-                f"<span style='display:inline-block;background:#e0f0ff;color:#004080;"
-                f"padding:5px 10px;border-radius:15px;margin:2px;font-size:14px;'>{kw}</span>",
+                "".join(
+                    f"<span style='display:inline-block;background:#e0f0ff;color:#004080;"
+                    f"padding:5px 10px;border-radius:15px;margin:2px;font-size:14px;'>{kw}</span>"
+                    for kw in metadata["keywords"]
+                ),
                 unsafe_allow_html=True
             )
 
-        st.markdown("### ☁️ Word Cloud")
-        st.image(mg.generate_wordcloud_image(text), use_column_width=True)
+        #Basic metrics
+        with st.expander("📈 Document Metrics", expanded=True):
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Word Count", stats["word_count"])
+            col2.metric("Sentences", stats["sentence_count"])
+            col3.metric("Named Entities", stats["entity_count"])
 
-        st.markdown("### 📊 Keyword Relevance")
-        st.image(mg.keyword_bar_chart_image(meta["keyword_scores"]), use_column_width=True)
+        with st.expander("🧾 Structured Metadata"):
+            for title, content in metadata["structured_metadata"].items():
+                st.markdown(f"#### {title}")
+                st.write(content)
 
-        st.markdown("### 📈 Document Metrics")
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Word Count", metrics["word_count"])
-        col2.metric("Sentences", metrics["sentence_count"])
-        col3.metric("Named Entities", metrics["entity_count"])
+        #Wordcloud & Keyword bar chart
+        st.markdown("### 🔎 Keyword Insights")
+        col_wc, col_bar = st.columns(2)
 
-        st.markdown("### 🧠 Named Entity Recognition (NER)")
-        st.markdown(mg.render_ner_html(text), unsafe_allow_html=True)
+        with col_wc:
+            st.markdown("#### ☁️ Word Cloud")
+            st.image(mg.create_wordcloud_image(raw_text).resize((700, 400)))
 
-        json_path = f"{file.name}_metadata.json"
-        with open(json_path, "w") as f:
-            json.dump(meta, f, indent=2)
-        with open(json_path, "rb") as f:
+        with col_bar:
+            st.markdown("#### 📊 Keyword Relevance")
+            st.image(mg.keyword_score_bar_image(metadata["keyword_scores"]).resize((700, 400)))
+
+        with st.expander("🧠 Named Entity Recognition"):
+            st.markdown(mg.visualize_named_entities(raw_text), unsafe_allow_html=True)
+
+        #Download JSON metadata of the document
+        json_filename = f"{uploaded_file.name}_metadata.json"
+        with open(json_filename, "w") as json_out:
+            json.dump(metadata, json_out, indent=2)
+        with open(json_filename, "rb") as json_in:
             st.download_button(
                 label="⬇️ Download Metadata JSON",
-                data=f,
-                file_name=f"{file.name}_metadata.json",
+                data=json_in,
+                file_name=json_filename,
                 mime="application/json"
             )
-
-if len(docs_text) >= 2:
-    st.markdown("## 🧠 Topic Modeling across uploaded documents")
-    model, topics = mg.fit_topics(docs_text)
-    if model:
-        st.plotly_chart(model.visualize_barchart(top_n_topics=5))
-        st.plotly_chart(model.visualize_topics())
