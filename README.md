@@ -7,6 +7,12 @@ on, keyword extraction, named entity recognition, and more.
 # 📍 **Live App: https://automated-metadata-generator-app.streamlit.app**  
 👉 [Click Here for App Link](https://automated-metadata-generator-app.streamlit.app/) 👈  
 
+🎬 **Video Demo:**  
+📺 [Watch the Demo on Google Drive](https://drive.google.com/file/d/1JzmD3WbEOZeGhpquPUpZegwIeKFOzQQf/view?usp=sharing)
+<details>
+<summary>▶️ Click to preview the video below (Google Drive embed)</summary>
+<iframe src="https://drive.google.com/file/d/1JzmD3WbEOZeGhpquPUpZegwIeKFOzQQf/preview" width="100%" height="480" allow="autoplay"></iframe>
+</details>
 ---
 
 ## 🚀 Features
