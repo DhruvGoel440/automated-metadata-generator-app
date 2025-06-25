@@ -10,7 +10,7 @@ on, keyword extraction, named entity recognition, and more.
 # 🎬 **Video Demo:**  
 📺 [Watch the Demo on Google Drive](https://drive.google.com/file/d/1JzmD3WbEOZeGhpquPUpZegwIeKFOzQQf/view?usp=sharing)
 
-🔗 [![Watch the Demo](demo-thumbnail.png)](https://drive.google.com/file/d/1JzmD3WbEOZeGhpquPUpZegwIeKFOzQQf/view?usp=sharing)
+[![Watch the Demo](demo-thumbnail.png)](https://drive.google.com/file/d/1JzmD3WbEOZeGhpquPUpZegwIeKFOzQQf/view?usp=sharing)
 
 ---
 
